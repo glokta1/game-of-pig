@@ -92,6 +92,10 @@ func main() {
 
 	for p1Strat := p1LowerHold; p1Strat <= p1UpperHold; p1Strat++ {
 		for p2Strat := p2LowerHold; p2Strat <= p2UpperHold; p2Strat++ {
+			if p1Strat == p2Strat {
+				continue
+			}
+
 			fmt.Println(playRound(p1Strat, p2Strat, GAMES_PER_ROUND))
 		}
 	}
