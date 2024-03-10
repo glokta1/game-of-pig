@@ -8,44 +8,17 @@ import (
 	"strconv"
 )
 
-const NUMBER_OF_GAMES = 10
-const MAX_POINTS = 100
+const WINNING_SCORE = 100
+const GAMES_PER_ROUND = 10
 
-type Player struct {
-	hold   int
-	points int
-	wins   int
-}
-
-func (p *Player) play() bool {
-	points := 0
-	// keep rolling until either 1 rolled or reached hold
-	for p.points < MAX_POINTS && points < p.hold {
-		val := rollDice()
-		if val == 1 {
-			points = 0
-			break
-		}
-
-		points += val
-	}
-
-	fmt.Println(p.points)
-	p.points += points
-	return p.points >= MAX_POINTS
-}
-
-// input: x, rolling till total >= x
-func parseArgsToInt(args []string) []int {
+func parseArgs(args []string) []int {
 	intArgs := make([]int, 0, len(args))
-
-	for _, argString := range args {
-		num, err := strconv.Atoi(argString)
+	for _, arg := range args {
+		intArg, err := strconv.Atoi(arg)
 		if err != nil {
-			log.Fatalln("Only integer arguments are allowed", err)
+			log.Fatalln(err)
 		}
-
-		intArgs = append(intArgs, num)
+		intArgs = append(intArgs, intArg)
 	}
 
 	return intArgs
@@ -55,37 +28,57 @@ func rollDice() int {
 	return 1 + rand.Intn(6)
 }
 
-func startGame(p1, p2 *Player) {
-	for {
-		// returns true, if reached MAX_points
-		won := p1.play()
-		if won {
-			p1.wins++
-			break
+func playTurn(strat int) int {
+	score := 0
+	for score <= strat {
+		rolled := rollDice()
+		if rolled == 1 {
+			return 0
 		}
 
-		won = p2.play()
-		if won {
-			p2.wins++
-			break
+		score += rolled
+	}
+
+	return score
+}
+
+func playGame(p1Strat int, p2Strat int) int {
+	var p1Score, p2Score int
+
+	for {
+		p1Score += playTurn(p1Strat)
+		if p1Score >= WINNING_SCORE {
+			return 0
+		}
+		p2Score += playTurn(p2Strat)
+		if p2Score >= WINNING_SCORE {
+			return 1
+		}
+	}
+}
+
+func calculatePercentage(part, total int) float32 {
+	return float32(part) * 100 / float32(total)
+}
+
+func playRound(p1Strat int, p2Strat, games int) string {
+	p1Wins := 0
+	for i := 0; i < games; i++ {
+		if playGame(p1Strat, p2Strat) == 0 {
+			p1Wins++
 		}
 	}
 
-	p1.points = 0
-	p2.points = 0
+	p1Losses := games - p1Wins
+	p1WinPercentage := calculatePercentage(p1Wins, games)
+	p1LossPercentage := 100 - p1WinPercentage
+	return fmt.Sprintf("Holding at %d vs Holding at %d: wins: %d/%d (%0.1f%%), losses: %d/%d(%0.1f%%)", p1Strat, p2Strat, p1Wins, games, p1WinPercentage, p1Losses, games, p1LossPercentage)
 }
 
 func main() {
-	intArgs := parseArgsToInt(os.Args[1:])
-	fmt.Println(intArgs)
+	args := parseArgs(os.Args[1:])
+	p1Strat, p2Strat := args[0], args[1]
+	fmt.Println(args)
 
-	p1 := Player{hold: intArgs[0]}
-	p2 := Player{hold: intArgs[1]}
-
-	for i := 0; i < NUMBER_OF_GAMES; i++ {
-		// returns playerId of winner
-		startGame(&p1, &p2)
-	}
-
-	fmt.Printf("Holding at %d vs Holding at %d: wins: %d/%d (%0.1f%%), losses: %d/%d (%0.1f%%)", p1.hold, p2.hold, p1.wins, NUMBER_OF_GAMES, float32(p1.wins*100/NUMBER_OF_GAMES), p2.wins, NUMBER_OF_GAMES, float32(p2.wins*100/NUMBER_OF_GAMES))
+	fmt.Println(playRound(p1Strat, p2Strat, GAMES_PER_ROUND))
 }

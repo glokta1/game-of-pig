@@ -1,58 +1,30 @@
 package main
 
-import (
-	"slices"
-	"testing"
-)
+import "testing"
 
-func TestPlayerPlay(t *testing.T) {
-	p := Player{hold: 20, points: 0}
-	won := p.play()
+func TestParseArgs(t *testing.T) {
+	args := []string{"1", "2", "3"}
+	expected := []int{1, 2, 3}
 
-	if won {
-		t.Errorf("expected false, got true")
+	result := parseArgs(args)
+
+	if len(result) != len(expected) {
+		t.Errorf("Expected %d arguments, but got %d", len(expected), len(result))
 	}
 
-	if p.points < 0 || p.points > MAX_POINTS {
-		t.Errorf("invalid points value: %d", p.points)
-	}
-}
-
-func TestParseArgsToInt(t *testing.T) {
-	args := []string{"10", "20", "30"}
-	expected := []int{10, 20, 30}
-
-	result := parseArgsToInt(args)
-
-	if !slices.Equal(result, expected) {
-		t.Errorf("got %v, expected %v", result, expected)
+	for i, val := range result {
+		if val != expected[i] {
+			t.Errorf("Expected %d at index %d, but got %d", expected[i], i, val)
+		}
 	}
 }
 
-
-func TestRollDice(t *testing.T) {
-	result := rollDice()
-
-	if result < 1 || result > 6 {
-		t.Errorf("invalid dice roll value: %d", result)
+func TestPlayTurn(t *testing.T) {
+	strat := 10
+	for i := 0; i < 10000; i++ {
+		score := playTurn(strat)
+		if score > strat+6 {
+			t.Errorf("Expected score < %d, but got %d", strat, score)
+		}
 	}
-}
-
-func TestStartGame(t *testing.T) {
-	p1 := Player{hold: 20, points: 0}
-	p2 := Player{hold: 20, points: 0}
-
-	startGame(&p1, &p2)
-
-	if p1.points < 0 || p1.points > MAX_POINTS {
-		t.Errorf("invalid points value for player 1: %d", p1.points)
-	}
-
-	if p2.points < 0 || p2.points > MAX_POINTS {
-		t.Errorf("invalid points value for player 2: %d", p2.points)
-	}
-}
-
-func TestMain(t *testing.T) {
-	// TODO: Write tests for the main function
 }
