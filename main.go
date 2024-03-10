@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"strings"
 )
 
 const WINNING_SCORE = 100
@@ -75,10 +76,23 @@ func playRound(p1Strat int, p2Strat, games int) string {
 	return fmt.Sprintf("Holding at %d vs Holding at %d: wins: %d/%d (%0.1f%%), losses: %d/%d(%0.1f%%)", p1Strat, p2Strat, p1Wins, games, p1WinPercentage, p1Losses, games, p1LossPercentage)
 }
 
-func main() {
-	args := parseArgs(os.Args[1:])
-	p1Strat, p2Strat := args[0], args[1]
-	fmt.Println(args)
+func getLowerAndUpperHoldLimit(args string) (int, int) {
+	parts := parseArgs(strings.Split(args, "-"))
 
-	fmt.Println(playRound(p1Strat, p2Strat, GAMES_PER_ROUND))
+	// single strategy
+	if len(parts) < 2 {
+		return parts[0], parts[0]
+	}
+
+	return parts[0], parts[1]
+}
+func main() {
+	p1LowerHold, p1UpperHold := getLowerAndUpperHoldLimit(os.Args[1])
+	p2LowerHold, p2UpperHold := getLowerAndUpperHoldLimit(os.Args[2])
+
+	for p1Strat := p1LowerHold; p1Strat <= p1UpperHold; p1Strat++ {
+		for p2Strat := p2LowerHold; p2Strat <= p2UpperHold; p2Strat++ {
+			fmt.Println(playRound(p1Strat, p2Strat, GAMES_PER_ROUND))
+		}
+	}
 }
